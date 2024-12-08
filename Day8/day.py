@@ -1,8 +1,6 @@
 from itertools import groupby
 from typing import Callable, Iterable, Any, Dict, Optional
 import copy
-from collections import deque
-from itertools import product
 
 def flatten(xss):
     return [x for xs in xss for x in xs]
@@ -54,68 +52,126 @@ def group_by(data, key_func):
     
     return grouped_data
 
-def try_solve_equation_with_rek_tree(equation):
-    target = equation[0]
-    operands = equation[1]
-    n = len(operands)
 
-    def solve_rek(index, sum):
-        if target < sum:
-            return False
-        if index == n and target == sum:
-            return True
-        if index < n:
-            return solve_rek(index + 1, sum + operands[index]) == True or solve_rek(index + 1, sum * operands[index]) == True or solve_rek(index + 1, int(str(sum) + str(operands[index]))) == True
-        return False
+def get_freq(maze):
+    feq = dict()
+    for i in range(0, len(maze)):
+        for j in range(0, len(maze[0])):
+            if maze[i][j] != '.':
+                if maze[i][j] in feq:
+                    feq[maze[i][j]].append((i,j))
+                else:
+                    feq[maze[i][j]] = [(i,j)]
+    return feq
+
+def solve_maze_1(maze):
+    m = len(maze)
+    n = len(maze[0])
+    feq_map = get_freq(maze)
+
+    maze_antinodes = copy.deepcopy(maze)
+
+    def get_dist(a1, a2):
+       return (a1[0] - a2[0], a1[1]- a2[1]) 
     
-    return solve_rek(0, 0)
-
-def try_solve_equation(equation):
-    target = equation[0]
-    operands = equation[1]
-
-    def evaluate_eq(operators):
-        op_vals = deque()
-        for x in operands:
-            op_vals.append(x)
+    def add_node(a1, a2):
+        return (a1[0] + a2[0], a1[1] + a2[1]) 
     
-        ops = copy.copy(operators)
-        while(len(ops) > 0):
-            a = op_vals.popleft()
-            b = op_vals.popleft()
-            op = ops.pop(0)
-            val = a * b if op == '*' else a + b if op == '+' else int(str(a) + str(b))
-            op_vals.appendleft(val)
-        return int(op_vals.popleft())
+    def sub_node(a1, a2):
+        return (a1[0] - a2[0], a1[1] - a2[1]) 
     
-    number_of_operators = len(operands) - 1
+    def is_on_map(node):
+        return (node[0] >= m or node[0] < 0 or node[1] >= n or node[1] < 0) == False
 
-    prod = product('+*|', repeat=number_of_operators)
-    for p in prod:
-        if evaluate_eq(list(p)) == target:
-            return True
-    return False
-    
+    for fq, v in feq_map.items():
+        for i in range(0, len(v)):
+            for e in range(i + 1, len(v)):
+                dist = get_dist(v[i], v[e])
+                anti_node_loc1 = add_node(v[i], dist)
+                anti_node_loc2 = sub_node(v[e], dist)
+                if is_on_map(anti_node_loc1):
+                    maze_antinodes[anti_node_loc1[0]][anti_node_loc1[1]] = '#'
+                if is_on_map(anti_node_loc2):
+                    maze_antinodes[anti_node_loc2[0]][anti_node_loc2[1]] = '#'    
 
-def solvable_equations(equations):
+    def print_anti_nodes():
+        s = ''
+        for i in range(0, m):
+            row = maze_antinodes[i]
+            s = s + ''.join(row) + '\n'
+        print(s)
+        print('   ')
+    print_anti_nodes()
+
     count = 0
-    for eq in equations:
-        if try_solve_equation_with_rek_tree(eq) == True:
-            count = count + eq[0]
+    for i in range(0, m):
+        for e in range(0, n):
+            if maze_antinodes[i][e] == '#':
+                count = count + 1
+
     return count
+
+def solve_maze_2(maze):
+    m = len(maze)
+    n = len(maze[0])
+    feq_map = get_freq(maze)
+
+    maze_antinodes = copy.deepcopy(maze)
+
+    def get_dist(a1, a2):
+       return (a1[0] - a2[0], a1[1]- a2[1]) 
+    
+    def add_node(a1, a2):
+        return (a1[0] + a2[0], a1[1] + a2[1]) 
+    
+    def sub_node(a1, a2):
+        return (a1[0] - a2[0], a1[1] - a2[1]) 
+    
+    def is_on_map(node):
+        return (node[0] >= m or node[0] < 0 or node[1] >= n or node[1] < 0) == False
+
+    for fq, v in feq_map.items():
+        for i in range(0, len(v)):
+            for e in range(i + 1, len(v)):
+                dist = get_dist(v[i], v[e])
+                anti_node_loc1 = add_node(v[i], dist)
+                anti_node_loc2 = sub_node(v[i], dist)
+                maze_antinodes[v[i][0]][v[i][1]] = '#'
+                while(is_on_map(anti_node_loc1)):
+                    maze_antinodes[anti_node_loc1[0]][anti_node_loc1[1]] = '#'
+                    anti_node_loc1 = add_node(anti_node_loc1, dist)
+                while(is_on_map(anti_node_loc2)):
+                    maze_antinodes[anti_node_loc2[0]][anti_node_loc2[1]] = '#'    
+                    anti_node_loc2 = sub_node(anti_node_loc2, dist) 
+
+    def print_anti_nodes():
+        s = ''
+        for i in range(0, m):
+            row = maze_antinodes[i]
+            s = s + ''.join(row) + '\n'
+        print(s)
+        print('   ')
+    print_anti_nodes()
+
+    count = 0
+    for i in range(0, m):
+        for e in range(0, n):
+            if maze_antinodes[i][e] == '#':
+                count = count + 1
+
+    return count
+                
 
 def readInput():
     with open('input.txt') as csvfile:
 
         def sanitize(row):
             f = row.replace('\n', '')
-            l = f.split(':')
-
-            return  [int(l[0]), [int(x) for x in list(filter(lambda x : x != ' ' and x != '', l[1].split(' ')))]]
+            return list(f)
 
         rows = [ sanitize(row) for row in csvfile.readlines()]
         return rows
 
 m = readInput()
 
-print(solvable_equations(m))
+print(solve_maze_2(m))
