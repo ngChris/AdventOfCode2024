@@ -1,4 +1,6 @@
+from collections import deque
 from itertools import groupby
+import timeit
 from typing import Callable, Iterable, Any, Dict, Optional
 
 def flatten(xss):
@@ -51,6 +53,49 @@ def group_by(data, key_func):
     
     return grouped_data
 
+def solve_optimized(block_input):
+
+    def generate_files():
+        id = 0
+        blocks = deque([])
+        free_blocks = deque([])
+        pos = 0
+        for i in range(0, len(block_input)):
+            if i % 2 == 0:
+                repeats = block_input[i]
+                blocks.append((pos, repeats, id))
+                pos += repeats
+                id += 1
+            else:
+                repeats = block_input[i]
+                free_blocks.append((pos, repeats))
+                pos += repeats
+        return blocks, free_blocks
+    
+    blocks, free_blocks = generate_files()
+
+    def find_next_free(size):
+        for free_block in free_blocks:
+            if free_block[1] >= size:
+                return free_block
+        return None
+    
+    checksum = 0
+    while len(blocks) > 0:
+        #print(free_blocks)
+        block = blocks.pop()
+        curr_pos = block[0]
+        free_block = find_next_free(block[1])
+
+        if free_block != None and free_block[0] < block[0]:
+            ind = free_blocks.index(free_block)
+            free_blocks.remove(free_block)
+            new_free_block = (free_block[0] + block[1], free_block[1] - block[1])
+            free_blocks.insert(ind, new_free_block)
+            curr_pos = free_block[0]
+        for i in range(curr_pos, curr_pos + block[1]):
+            checksum += i * block[2]
+    return checksum
 
 def solve(block_input, part2=False):
 
@@ -137,4 +182,5 @@ def readInput():
 
 m = readInput()
 
-print(solve(m, True))
+#print(timeit.timeit(lambda: print(solve(m, True)), number=1))
+print(timeit.timeit(lambda: print(solve_optimized(m)), number=1))

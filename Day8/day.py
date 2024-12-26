@@ -1,4 +1,5 @@
 from itertools import groupby
+import timeit
 from typing import Callable, Iterable, Any, Dict, Optional
 import copy
 
@@ -51,7 +52,6 @@ def group_by(data, key_func):
     }
     
     return grouped_data
-
 
 def get_freq(maze):
     feq = dict()
@@ -137,6 +137,7 @@ def solve_maze_2(maze):
                 anti_node_loc1 = add_node(v[i], dist)
                 anti_node_loc2 = sub_node(v[i], dist)
                 maze_antinodes[v[i][0]][v[i][1]] = '#'
+                # no need to check antinodes between antennas since their distance is always coprime
                 while(is_on_map(anti_node_loc1)):
                     maze_antinodes[anti_node_loc1[0]][anti_node_loc1[1]] = '#'
                     anti_node_loc1 = add_node(anti_node_loc1, dist)
@@ -151,7 +152,7 @@ def solve_maze_2(maze):
             s = s + ''.join(row) + '\n'
         print(s)
         print('   ')
-    print_anti_nodes()
+    #print_anti_nodes()
 
     count = 0
     for i in range(0, m):
@@ -173,5 +174,4 @@ def readInput():
         return rows
 
 m = readInput()
-
-print(solve_maze_2(m))
+print(timeit.timeit(lambda: print(solve_maze_2(m)), number=1))
